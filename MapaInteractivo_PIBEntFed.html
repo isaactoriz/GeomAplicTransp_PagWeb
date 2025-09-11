@@ -1,0 +1,157 @@
+<!-- Al GeoJASON se le debió haber agregado al inicio el texto:
+   var statesData = 
+Y al final:
+   ;
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	<title>PIB por Entidad Federativa 1er Trimestre 2025</title>
+	
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		.leaflet-container {
+			height: 400px;
+			width: 600px;
+			max-width: 100%;
+			max-height: 100%;
+		}
+	</style>
+
+	<style>#map { width: 1080px; height: 720px; }
+.info { padding: 6px 8px; font: 14px/16px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; }
+.legend { text-align: left; line-height: 18px; color: #555; } .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }</style>
+</head>
+<body>
+
+<div id='map'></div>
+
+<script type="text/javascript" src="https://isaactoriz.github.io/GeomAplicTransp_PagWeb/PIB_Ent_GeoJS_Simplif5Metros.js"></script>
+
+<script type="text/javascript">
+
+	const map = L.map('map').setView([23.5, -99], 5); 
+
+	const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	}).addTo(map);
+
+	// control that shows state info on hover
+	const info = L.control();
+
+	info.onAdd = function (map) {
+		this._div = L.DomUtil.create('div', 'info');
+		this.update();
+		return this._div;
+	};
+
+	info.update = function (props) {
+		const contents = props ? `<b>${props.NOMGEO}</b><br />${props.PibCalc25} millones de pesos</sup>` : 'Apunta un estado';
+		this._div.innerHTML = `<h4>PIB por Entidad Federativa 1er Trimestre 2025</h4>${contents}`;
+	};
+
+	info.addTo(map);
+
+
+	// get color depending on population density value
+	function getColor(d) {
+		return d > 1150000 ? '#67000d' :
+			d > 880000  ? '#ba1419' :
+			d > 610000  ? '#ea372a' :
+			d > 460000  ? '#fb7050' :
+			d > 370000   ? '#fca486' :
+			d > 250000   ? '#fdd6c4' :
+			d > 140000   ? '#fff5f0' :'#33a02c';
+	}
+
+	function style(feature) {
+		return {
+			weight: 1,
+			opacity: 1,
+			color: 'white',
+			dashArray: '5',
+			fillOpacity: 0.7,
+			fillColor: getColor(feature.properties.PibCalc25)
+		};
+	}
+
+	function highlightFeature(e) {
+		const layer = e.target;
+
+		layer.setStyle({
+			weight: 3,
+			color: '#666',
+			dashArray: '',
+			fillOpacity: 0.7
+		});
+
+		layer.bringToFront();
+
+		info.update(layer.feature.properties);
+	}
+
+	/* global statesData */
+	const geojson = L.geoJson(statesData, {
+		style,
+		onEachFeature
+	}).addTo(map);
+
+	function resetHighlight(e) {
+		geojson.resetStyle(e.target);
+		info.update();
+	}
+
+	function zoomToFeature(e) {
+		map.fitBounds(e.target.getBounds());
+	}
+
+	function onEachFeature(feature, layer) {
+		layer.on({
+			mouseover: highlightFeature,
+			mouseout: resetHighlight,
+			click: zoomToFeature
+		});
+	}
+
+	map.attributionControl.addAttribution('Datos de PIB &copy; <a href="https://www.inegi.org.mx/app/tabulados/default.aspx?pr=19&vr=1&in=1&tp=20&wr=1&cno=1&idrt=3260&opc=p">INEGI</a> e <a href="https://www.inegi.org.mx/app/saladeprensa/noticia/10040">ITAEE</a>');
+
+
+	const legend = L.control({position: 'bottomright'}); <!-- bottomright es para ubicarlo abajo a la derecha, topleft es para ubicarlo arriba a la izquierda -->
+
+	legend.onAdd = function (map) {
+
+		const div = L.DomUtil.create('div', 'info legend');
+		const grades = [140000, 250000, 370000, 460000, 610000, 880000, 1150000, 4000000];
+		const labels = ['<b>PIB por Entidad Federativa</b>'];
+		let from, to;
+
+		for (let i = 0; i < grades.length-1; i++) { <!-- El -1 después de grades.lenght es para eliminar la última fila de la leyenda, 4000000+ -->
+			from = grades[i];
+			to = grades[i + 1];
+
+			labels.push(`<i style="background:${getColor(from + 1)}"></i> ${from}${to ? `&ndash;${to}` : '+'}`);
+		}
+
+		div.innerHTML = labels.join('<br>');
+		return div;
+	};
+
+	legend.addTo(map);
+
+</script>
+
+</body>
+</html>
