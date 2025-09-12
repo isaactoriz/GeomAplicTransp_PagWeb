@@ -59,7 +59,7 @@ Y al final:
 	};
 
 	info.update = function (props) {
-		const contents = props ? `<b>${props.NOMGEO}</b><br />${props.PibCalc25} millones de pesos</sup>` : 'Apunta un estado';
+		const contents = props ? `<b>${props.NOMGEO}</b><br/>${props.Municipios} municipios<br/>${props.SUP} m<sup>2</sup> de superficie<br/>${props.PibCalc25} millones de pesos (PIB)<br/>${props.Long_Carret} m de carretera<br/>${props.Dens_Carret} densidad carretera<br/>${props.UE} unidades económicas<br/>${props.Dens_UE} densidad de unidades económicas` : 'Apunta un estado';
 		this._div.innerHTML = `<h4>PIB por Entidad Federativa 1er Trimestre 2025</h4>${contents}`;
 	};
 
